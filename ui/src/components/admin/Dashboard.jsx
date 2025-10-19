@@ -12,7 +12,7 @@ function Dashboard({ stats }) {
         </div>
         <div className="stat-card">
           <h4>주문 접수</h4>
-          <p>{stats.accepted}</p>
+          <p>{stats.pending}</p>
         </div>
         <div className="stat-card">
           <h4>제조 중</h4>

@@ -1,9 +1,13 @@
 # Dependencies
-/node_modules
+# Ignore node_modules folders in all subdirectories (e.g., /server/node_modules)
+node_modules/
 
 # Build output
 /dist
 /build
+
+# Test reports
+coverage/
 
 # Logs
 logs

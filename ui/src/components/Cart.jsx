@@ -1,7 +1,7 @@
 import React from 'react';
 import './Cart.css';
 
-function Cart({ cartItems }) {
+function Cart({ cartItems, onPlaceOrder }) {
   const calculateLinePrice = (item) => {
     const optionsPrice = item.selectedOptions.reduce((sum, option) => sum + option.priceDelta, 0);
     return (item.basePrice + optionsPrice) * item.quantity;
@@ -47,7 +47,7 @@ function Cart({ cartItems }) {
             <span>최종 결제 금액</span>
             <span>{total.toLocaleString()}원</span>
           </div>
-          <button className="order-btn">주문하기</button>
+          <button className="order-btn" onClick={onPlaceOrder}>주문하기</button>
         </div>
       )}
     </div>

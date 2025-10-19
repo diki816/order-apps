@@ -117,7 +117,7 @@
 - 재고 카드(반복)
   - 항목: 메뉴명(예: 아메리카노 ICE/HOT, 카페라떼), 현재 재고 수량(예: 10개)
   - `+`, `-` 버튼: 1단위 증감, 하한 0, 상한 999(가정)
-  - 서버 동기화 실패 시 이전 값으로 롤백 및 경고 토스트
+  - 서버 동기화 실패 시 이전 값로 롤백 및 경고 토스트
 - 주문 리스트 항목
   - 필드: 주문시각, 항목 요약(메뉴/옵션/수량), 금액, 상태
   - 액션: `주문 접수` 버튼(대기 상태에서만 노출)
@@ -161,3 +161,191 @@
 ### 5.11 오픈 이슈
 - 정확한 상태 모델(accepted vs inProgress) 정의 확정 필요
 - 권한/인증은 학습 범위 밖이나, 추후 보호 필요
+
+## 6. 백엔드 설계 (Backend Design)
+
+### 6.1 데이터베이스 스키마 (PostgreSQL)
+
+ERD (Entity Relationship Diagram) 요약:
+- `menu_items`는 여러 `options`를 가질 수 있다 (through `menu_item_options`).
+- `orders`는 여러 `order_items`를 포함한다.
+- `order_items`는 주문된 특정 `menu_item`을 가리킨다.
+- `order_items`는 여러 `options`를 가질 수 있다 (through `order_item_options`).
+
+---
+
+**1. `menu_items` table**
+- 메뉴 정보를 저장합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `SERIAL` | `PRIMARY KEY` | 메뉴 아이템 고유 ID |
+| `name` | `VARCHAR(255)` | `NOT NULL` | 메뉴 이름 (예: "아메리카노 (ICE)") |
+| `description` | `TEXT` | | 메뉴 설명 |
+| `price` | `INTEGER` | `NOT NULL`, `DEFAULT 0` | 기본 가격 |
+| `image_url` | `VARCHAR(255)` | | 메뉴 이미지 URL |
+| `stock_quantity`| `INTEGER` | `NOT NULL`, `DEFAULT 0` | 현재 재고 수량 |
+| `created_at` | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | 생성 시각 |
+
+**2. `options` table**
+- 모든 메뉴에 공통적으로 적용될 수 있는 옵션 정보를 저장합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `SERIAL` | `PRIMARY KEY` | 옵션 고유 ID |
+| `name` | `VARCHAR(255)` | `NOT NULL`, `UNIQUE` | 옵션 이름 (예: "샷 추가") |
+| `price_delta` | `INTEGER` | `NOT NULL`, `DEFAULT 0` | 가격 변동량 |
+
+**3. `menu_item_options` table (Join Table)**
+- 메뉴와 옵션 간의 다대다 관계를 정의합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `menu_item_id`| `INTEGER` | `FOREIGN KEY (menu_items.id)` | 메뉴 아이템 ID |
+| `option_id` | `INTEGER` | `FOREIGN KEY (options.id)` | 옵션 ID |
+| | | `PRIMARY KEY (menu_item_id, option_id)` | |
+
+**4. `orders` table**
+- 고객의 주문 정보를 저장합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `SERIAL` | `PRIMARY KEY` | 주문 고유 ID |
+| `total_price` | `INTEGER` | `NOT NULL` | 주문 총액 (세금 포함) |
+| `status` | `VARCHAR(50)`| `NOT NULL`, `DEFAULT 'pending'` | 주문 상태 ('pending', 'inProgress', 'completed') |
+| `created_at` | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | 주문 시각 |
+
+**5. `order_items` table**
+- 특정 주문에 포함된 개별 메뉴 아이템들을 저장합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `SERIAL` | `PRIMARY KEY` | 주문 아이템 고유 ID |
+| `order_id` | `INTEGER` | `FOREIGN KEY (orders.id)` | 주문 ID |
+| `menu_item_id`| `INTEGER` | `FOREIGN KEY (menu_items.id)` | 메뉴 아이템 ID |
+| `quantity` | `INTEGER` | `NOT NULL`, `DEFAULT 1` | 수량 |
+| `unit_price` | `INTEGER` | `NOT NULL` | 주문 시점의 단가 (기본가 + 옵션가) |
+
+**6. `order_item_options` table (Join Table)**
+- 주문된 특정 아이템에 어떤 옵션이 선택되었는지 저장합니다.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `order_item_id`| `INTEGER` | `FOREIGN KEY (order_items.id)` | 주문 아이템 ID |
+| `option_id` | `INTEGER` | `FOREIGN KEY (options.id)` | 선택된 옵션 ID |
+| | | `PRIMARY KEY (order_item_id, option_id)` | |
+
+---
+
+### 6.2 API 명세 (API Specification)
+
+#### **Menu API**
+
+- **`GET /api/menu`**: 모든 메뉴 아이템과 선택 가능한 옵션 목록을 조회합니다.
+  - **Response Body**:
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "아메리카노 (ICE)",
+        "description": "시원하고 깔끔한 맛",
+        "price": 4000,
+        "imageUrl": "...",
+        "isSoldOut": false,
+        "options": [
+          { "id": 1, "name": "샷 추가", "priceDelta": 500 },
+          { "id": 2, "name": "시럽 추가", "priceDelta": 0 }
+        ]
+      }
+    ]
+    ```
+
+#### **Order API**
+
+- **`POST /api/orders`**: 신규 주문을 생성합니다.
+  - **Request Body**:
+    ```json
+    {
+      "items": [
+        {
+          "menuItemId": 1,
+          "quantity": 2,
+          "options": [1, 2] // Option IDs
+        }
+      ],
+      "totalPrice": 9000
+    }
+    ```
+  - **Response Body**:
+    ```json
+    {
+      "orderId": 123,
+      "message": "주문이 성공적으로 접수되었습니다."
+    }
+    ```
+
+#### **Admin API**
+
+- **`GET /api/admin/stats`**: 대시보드 통계를 조회합니다.
+  - **Response Body**:
+    ```json
+    {
+      "totalOrders": 100,
+      "pending": 10,
+      "inProgress": 5,
+      "completed": 85
+    }
+    ```
+
+- **`GET /api/admin/inventory`**: 전체 메뉴의 재고 현황을 조회합니다.
+  - **Response Body**:
+    ```json
+    [
+      { "id": 1, "name": "아메리카노 (ICE)", "stockQuantity": 20 },
+      { "id": 2, "name": "아메리카노 (HOT)", "stockQuantity": 4 }
+    ]
+    ```
+
+- **`PATCH /api/admin/inventory/:id`**: 특정 메뉴의 재고를 수정합니다.
+  - **Request Body**:
+    ```json
+    {
+      "quantity": 25
+    }
+    ```
+  - **Response Body**:
+    ```json
+    { "id": 1, "name": "아메리카노 (ICE)", "stockQuantity": 25 }
+    ```
+
+- **`GET /api/admin/orders`**: 주문 목록을 조회합니다. (상태별 필터링 가능)
+  - **Query Parameter**: `?status=pending` (optional)
+  - **Response Body**:
+    ```json
+    [
+      {
+        "id": 123,
+        "createdAt": "2025-10-20T13:00:00Z",
+        "totalPrice": 9000,
+        "status": "pending",
+        "items": [
+          { "name": "아메리카노 (ICE)", "quantity": 2, "options": ["샷 추가", "시럽 추가"] }
+        ]
+      }
+    ]
+    ```
+
+- **`PATCH /api/admin/orders/:id/status`**: 주문 상태를 변경합니다.
+  - **Request Body**:
+    ```json
+    {
+      "status": "inProgress"
+    }
+    ```
+  - **Response Body**:
+    ```json
+    {
+      "orderId": 123,
+      "newStatus": "inProgress"
+    }
+    ```

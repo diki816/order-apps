@@ -19,11 +19,11 @@ function Inventory({ items, onStockChange }) {
         {items.map((item) => (
           <div key={item.id} className="inventory-card">
             <h4>{item.name}</h4>
-            <p className="quantity">{item.quantity}개</p>
-            <div className="status-badge">{getStatus(item.quantity)}</div>
+            <p className="quantity">{item.stockQuantity}개</p>
+            <div className="status-badge">{getStatus(item.stockQuantity)}</div>
             <div className="stock-controls">
-              <button onClick={() => onStockChange(item.id, item.quantity - 1)} disabled={item.quantity <= 0}>-</button>
-              <button onClick={() => onStockChange(item.id, item.quantity + 1)}>+</button>
+              <button onClick={() => onStockChange(item.id, item.stockQuantity - 1)} disabled={item.stockQuantity <= 0}>-</button>
+              <button onClick={() => onStockChange(item.id, item.stockQuantity + 1)}>+</button>
             </div>
           </div>
         ))}
