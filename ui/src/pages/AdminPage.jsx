@@ -14,9 +14,9 @@ function AdminPage() {
   const fetchAdminData = useCallback(async () => {
     try {
       const [statsRes, inventoryRes, ordersRes] = await Promise.all([
-        fetch('/api/admin/stats'),
-        fetch('/api/admin/inventory'),
-        fetch('/api/admin/orders'),
+        fetch('https://cozy-backend-ksq3.onrender.com/api/admin/stats'),
+        fetch('https://cozy-backend-ksq3.onrender.com/api/admin/inventory'),
+        fetch('https://cozy-backend-ksq3.onrender.com/api/admin/orders'),
       ]);
 
       if (!statsRes.ok || !inventoryRes.ok || !ordersRes.ok) {
@@ -52,7 +52,7 @@ function AdminPage() {
   const handleStockChange = async (itemId, newQuantity) => {
     if (newQuantity < 0) return;
     try {
-      const response = await fetch(`/api/admin/inventory/${itemId}`,
+      const response = await fetch(`https://cozy-backend-ksq3.onrender.com/api/admin/inventory/${itemId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -70,7 +70,7 @@ function AdminPage() {
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`,
+      const response = await fetch(`https://cozy-backend-ksq3.onrender.com/api/admin/orders/${orderId}/status`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

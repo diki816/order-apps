@@ -10,7 +10,7 @@ function Menu({ onAddToCart }) {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch('/api/menu');
+        const response = await fetch('https://cozy-backend-ksq3.onrender.com/api/menu');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
