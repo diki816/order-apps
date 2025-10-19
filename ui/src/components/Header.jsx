@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import './Header.css';
 
 function Header() {
@@ -6,8 +7,12 @@ function Header() {
     <header className="header">
       <div className="logo">COZY</div>
       <nav>
-        <a href="#" className="nav-item active">주문하기</a>
-        <a href="#" className="nav-item">관리자</a>
+        <NavLink to="/" className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}>
+          주문하기
+        </NavLink>
+        <NavLink to="/admin" className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}>
+          관리자
+        </NavLink>
       </nav>
     </header>
   );

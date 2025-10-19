@@ -44,3 +44,47 @@ export const menuItems = [
     ],
   },
 ];
+
+export const adminStats = {
+  totalOrders: 25,
+  accepted: 5,
+  inProgress: 8,
+  completed: 12,
+};
+
+export const inventoryItems = [
+  { id: 1, name: '아메리카노 (ICE)', quantity: 15 },
+  { id: 2, name: '아메리카노 (HOT)', quantity: 4 },
+  { id: 3, name: '카페라떼', quantity: 0 },
+];
+
+export const orders = [
+  {
+    id: 1,
+    createdAt: '2025-10-20T13:00:00',
+    items: [
+      { name: '아메리카노 (ICE)', quantity: 1, options: ['샷 추가'] },
+    ],
+    totalPrice: 4500,
+    status: 'pending', // or '주문 접수'
+  },
+  {
+    id: 2,
+    createdAt: '2025-10-20T13:05:00',
+    items: [
+      { name: '카페라떼', quantity: 2, options: [] },
+    ],
+    totalPrice: 10000,
+    status: 'pending',
+  },
+    {
+    id: 3,
+    createdAt: '2025-10-20T13:02:00',
+    items: [
+      { name: '아메리카노 (HOT)', quantity: 1, options: [] },
+      { name: '바닐라 라떼', quantity: 1, options: ['두유로 변경'] },
+    ],
+    totalPrice: 9500,
+    status: 'inProgress', // or '제조 중'
+  },
+];

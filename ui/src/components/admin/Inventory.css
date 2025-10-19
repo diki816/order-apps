@@ -1,0 +1,81 @@
+.inventory-container {
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.inventory-container h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.inventory-card {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.inventory-card h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.inventory-card .quantity {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.status-badge {
+  margin-bottom: 1rem;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.status.normal {
+  background-color: #28a745;
+}
+
+.status.warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status.sold-out {
+  background-color: #dc3545;
+}
+
+.stock-controls button {
+  width: 30px;
+  height: 30px;
+  margin: 0 0.25rem;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.stock-controls button:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
+}
